@@ -1,6 +1,8 @@
 from fastapi import FastAPI, HTTPException
 import psycopg2
-from fastapi.middleware.cors import CORSMiddleware 
+from fastapi.middleware.cors import CORSMiddleware
+import os
+import psutil
 
 app = FastAPI()
 
@@ -13,9 +15,10 @@ conn = psycopg2.connect(
     port="5432"
 )
 
+# Enable CORS (For frontend communication)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Change this to ["http://localhost:3000"] in production
+    allow_origins=["*"],  # Change this in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -34,11 +37,11 @@ def get_data():
         result = [
             {
                 "id": row[0],
-                "timestamp": row[1].isoformat(),  # Convert timestamp to string
-                "temperature": row[2],
-                "soil_moisture": row[3],
-                "humidity": row[4],
-                "ph_level": row[5]
+                "timestamp": row[1].isoformat().replace("T", " "),
+                "temperature": row[2] if row[2] is not None else "No data",
+                "soil_moisture": row[3] if row[3] is not None else "No data",
+                "humidity": row[4] if row[4] is not None else "No data",
+                "ph_level": row[5] if row[5] is not None else "No data",
             }
             for row in rows
         ]
@@ -46,3 +49,13 @@ def get_data():
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+@app.get("/ping")
+def ping():
+    """Returns system resource usage (CPU, RAM, Disk)"""
+    return {
+        "cpu": f"{psutil.cpu_percent()}%",
+        "ram": f"{psutil.virtual_memory().percent}%",
+        "disk": f"{psutil.disk_usage('/').percent}%",
+    }
