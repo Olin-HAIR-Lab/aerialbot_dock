@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 import psycopg2
 from fastapi.middleware.cors import CORSMiddleware
 import os
@@ -15,7 +16,6 @@ conn = psycopg2.connect(
     port="5432"
 )
 
-# Enable CORS (For frontend communication)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Change this in production
@@ -23,6 +23,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Define a Pydantic model for the incoming sensor data
+class SensorDataModel(BaseModel):
+    timestamp: str
+    sensor_data: dict
 
 @app.get("/api/data")
 def get_data():
@@ -50,6 +55,29 @@ def get_data():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
+@app.post("/api/data")
+def post_data(data: SensorDataModel):
+    try:
+        timestamp = data.timestamp
+        temperature = data.sensor_data.get("temperature")
+        soil_moisture = data.sensor_data.get("soil_moisture")
+        humidity = data.sensor_data.get("humidity")
+        ph_level = data.sensor_data.get("ph_level")
+
+        cur = conn.cursor()
+        cur.execute(
+            """
+            INSERT INTO sensor_data (timestamp, temperature, soil_moisture, humidity, ph_level)
+            VALUES (%s, %s, %s, %s, %s)
+            """,
+            (timestamp, temperature, soil_moisture, humidity, ph_level)
+        )
+        conn.commit()
+        cur.close()
+        return {"message": "Data received successfully"}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 @app.get("/ping")
 def ping():
