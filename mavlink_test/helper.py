@@ -1,4 +1,5 @@
 import json
+from math import ceil
 
 def chop_json(path: str, chunk_size: int = 50) -> list[str]:
     try:
@@ -11,11 +12,11 @@ def chop_json(path: str, chunk_size: int = 50) -> list[str]:
 
     # MAVLink has a max payload size (STATUSTEXT max is 50 chars), so we send in chunks
     chunks = [json_string[i : i + chunk_size] for i in range(0, len(json_string), chunk_size)]
+
+    # Add marker to ensure no chunks go missing
+    num_chunks = ceil(len(json_string)/chunk_size)
+    chunks = [f"{i+1}/{num_chunks}:" + chunk for i, chunk in enumerate(chunks)]
     return chunks
-
-def reconstruct_json()->None:
-    pass
-
 
 if __name__ == "__main__":
     a = chop_json("fake_data.json")
