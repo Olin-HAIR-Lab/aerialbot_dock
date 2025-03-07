@@ -30,6 +30,7 @@ class SensorDataModel(BaseModel):
     sensor_data: Dict[str, Optional[float]]
     battery_level: Optional[float] = None
     signal_strength: Optional[float] = None
+    status: Optional[str] = None
 
 class SensorResponse(BaseModel):
     id: int
@@ -42,6 +43,7 @@ class SensorResponse(BaseModel):
     location_id: Optional[str] = None
     battery_level: Optional[float] = None
     signal_strength: Optional[float] = None
+    status: Optional[str] = None
 
 class DeviceModel(BaseModel):
     id: str
@@ -88,7 +90,7 @@ def get_data(
         
         query = """
             SELECT id, timestamp, temperature, soil_moisture, humidity, ph_level, 
-                   device_id, location_id, battery_level, signal_strength
+                   device_id, location_id, battery_level, signal_strength, status
             FROM sensor_data
             WHERE 1=1
         """
@@ -149,18 +151,19 @@ def post_data(data: SensorDataModel):
         location_id = data.location_id
         battery_level = data.battery_level
         signal_strength = data.signal_strength
+        status = data.status
 
         cur.execute(
             """
             INSERT INTO sensor_data (
                 timestamp, temperature, soil_moisture, humidity, ph_level,
-                device_id, location_id, battery_level, signal_strength
+                device_id, location_id, battery_level, signal_strength, status
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
             """,
             (timestamp, temperature, soil_moisture, humidity, ph_level,
-             device_id, location_id, battery_level, signal_strength)
+             device_id, location_id, battery_level, signal_strength, status)
         )
         
         inserted_id = cur.fetchone()['id']
