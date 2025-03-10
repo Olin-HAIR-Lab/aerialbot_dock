@@ -5,7 +5,7 @@ from helper import chop_json
 # ------------------------ Set up connections --------------------- #
 
 # MAVLink connection settings
-DOCK_IP = 'udpout:192.168.33.32:14551'  # Raspberry Pi's IP address
+DOCK_IP = 'udpout:192.168.35.240:14551'  # Raspberry Pi's IP address
 RECEIVER_IP = "udp:0.0.0.0:14552"  # Port to listen for responses
 
 # Establish MAVLink connections
@@ -17,9 +17,10 @@ print(f"Listening for responses on {RECEIVER_IP}")
 # -------------------------------------------------------------------#
 
 
-json_chunks = chop_json("data/fake_data.json")
+json_chunks = chop_json("data/fake_data.json", chunk_size=40)
+
 # Send transfer request to dock
-outgoing_data = "Data Transfer Request"
+outgoing_data = f"Request:{len(json_chunks)}"
 sender.mav.statustext_send(mavutil.mavlink.MAV_SEVERITY_INFO, outgoing_data.encode('ascii'))
 print(f"Sent transfer request to dock")
 
@@ -54,7 +55,6 @@ while chunk_idx < len(json_chunks):
                 print(f"Chunk {chunk_idx+1} delivered successfully.")
                 chunk_idx += 1  # Move to next chunk
                 break
-        # TODO logic needs to be fixed here.
         else:
             # Timeout reached, retry sending the chunk
             retries += 1
