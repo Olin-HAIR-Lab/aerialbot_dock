@@ -15,7 +15,7 @@ def chop_json(path: str, chunk_size: int = 50) -> list[str]:
 
     # Add marker to ensure no chunks go missing
     num_chunks = ceil(len(json_string)/chunk_size)
-    chunks = [f"{i+1}/{num_chunks}::" + chunk for i, chunk in enumerate(chunks)]
+    chunks = [f"{i+1}/{num_chunks}|" + chunk for i, chunk in enumerate(chunks)]
     return chunks
 
 def rebuild_json(chunks: str)->None:

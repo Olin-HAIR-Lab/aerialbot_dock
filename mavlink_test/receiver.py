@@ -4,7 +4,7 @@ import helper
 
 # IP addresses
 RECEIVER_IP = 'udp:0.0.0.0:14551'  # Receiving messages at port 14551
-COMPANION_IP = 'udpout:192.168.34.251:14552'  # Sending messages to companion PC
+COMPANION_IP = 'udpout:192.168.33.124:14552'  # Sending messages to companion PC
 
 # Establish connections
 receiver = mavutil.mavlink_connection(RECEIVER_IP)  # Receives messages
@@ -27,20 +27,17 @@ while True:
         received_data = msg.text
         print(f"Received mock data: {received_data}")
         if received_data.split(":")[0] == "Request": # type: ignore
-            outgoing_data = "1"
+            outgoing_data = "ACK"
             expected_chunk_count = int(received_data.split(":")[1]) # type: ignore
 
         else:
-            chunk_id, data = received_data.split("::")[0], received_data.split("::")[1] # type: ignore
+            chunk_id, data = received_data.split("|")[0], received_data.split("|")[1] # type: ignore
             next_chunk = received_chunk_count + 1
             if int(chunk_id[0]) == next_chunk:
-                outgoing_data = "1"
+                outgoing_data = f"ACK{chunk_id.split('/')[0]}"
                 received_chunk_count += 1
-                print(received_chunk_count)
                 chunks += data
-            else:
-                outgoing_data = "0"
-            
+
         sender.mav.statustext_send(mavutil.mavlink.MAV_SEVERITY_INFO, outgoing_data.encode('ascii'))
     
     if received_chunk_count == expected_chunk_count:
