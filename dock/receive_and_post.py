@@ -4,6 +4,12 @@ import datetime
 import socket
 
 def send_sensor_data(payload)->None:
+    """
+    Sends data payload to AWS server
+
+    Args:
+        payload (list): list of sensor data packaged as jsons (dict)
+    """
     SERVER_URL = "http://3.131.219.242:8000/api/data"
     try:
         # POST the payload as JSON
@@ -21,6 +27,11 @@ def send_sensor_data(payload)->None:
 
 
 def main()->None:
+    """
+    Main loop for dock. Waits for connection request, and receives data from the drone.
+    Received data then gets sent to AWS server.    
+    """   
+    
     HOST = '192.168.4.1'
     PORT = 5000
     
