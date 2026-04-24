@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "web_server/frontend/farm-dashboard/**"
+  workflow_dispatch:
 
 jobs:
   deploy:
