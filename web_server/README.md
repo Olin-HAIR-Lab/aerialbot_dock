@@ -83,6 +83,12 @@ The PostgreSQL database is hosted on Supabase (project: `aerialbot-dock`, region
 
 ---
 
+## Transferring to a New Account
+
+The Supabase and Railway projects are currently under a personal account. If ownership needs to be transferred, see the **[Migration Guide](MIGRATION_GUIDE.md)** for step-by-step instructions.
+
+---
+
 ## Local Setup Guide
 
 ### Prerequisites
