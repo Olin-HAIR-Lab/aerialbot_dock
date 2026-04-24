@@ -9,7 +9,7 @@ import { DataTable } from "./components/DataTable";
 import { FieldMap } from "./components/FieldMap";
 import { AnalyticsCharts } from "./components/AnalyticsCharts";
 
-const API = process.env.REACT_APP_API_URL || "http://localhost:8000";
+const API = (process.env.REACT_APP_API_URL || "http://localhost:8000").replace(/\/$/, "");
 const REFRESH_INTERVAL = 30000;
 
 export default function App() {
