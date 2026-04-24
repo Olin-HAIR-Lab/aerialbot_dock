@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException, Depends, Query
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
-import psycopg2
-from psycopg2.extras import RealDictCursor
+import psycopg
+from psycopg.rows import dict_row
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import psutil
@@ -12,14 +12,8 @@ app = FastAPI(title="Farm Sensor API")
 
 # Database connection function
 def get_db_connection():
-    conn = psycopg2.connect(
-        dbname="dronedb",
-        user="droneuser",
-        password="dockANDdata",
-        host="localhost",
-        port="5432",
-        cursor_factory=RealDictCursor
-    )
+    database_url = os.environ["DATABASE_URL"]
+    conn = psycopg.connect(database_url, row_factory=dict_row)
     return conn
 
 # Models
