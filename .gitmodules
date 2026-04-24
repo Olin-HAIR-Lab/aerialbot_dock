@@ -1,3 +1,0 @@
-[submodule "web_server/frontend/farm-dashboard-test"]
-	path = web_server/frontend/farm-dashboard-test
-	url = git@github.com:redhotchili0909/Farm-Sensor-Data-Dashboard-Test.git
