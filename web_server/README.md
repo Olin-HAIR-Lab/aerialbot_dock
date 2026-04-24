@@ -4,79 +4,135 @@ This directory contains the web server components for the Aerialbot Dock. It is 
 
 ## What it Contains
 
-- **/backend**: A Python [FastAPI](https://fastapi.tiangolo.com/) application. It acts as the central data hub. It connects to a PostgreSQL database to store and retrieve drone telemetry, farm sensor readings, device logs, and location data.
+- **/backend**: A Python [FastAPI](https://fastapi.tiangolo.com/) application. It acts as the central data hub. It connects to a Supabase PostgreSQL database to store and retrieve drone telemetry, farm sensor readings, device logs, and location data.
 - **/frontend/farm-dashboard**: A [React.js](https://reactjs.org/) application. This is the UI dashboard that farm operators use to visualize the sensor data and system status.
 
-## How it Works
+## Architecture
 
-The system operates on a standard **Client-Server architecture**:
-1. **IoT Devices / Drones** send sensor data (temperature, moisture, battery) to the **Backend API** via `POST /api/data`.
-2. The **Backend API** processes these requests and stores them securely in the PostgreSQL database (`dronedb`).
-3. The **Frontend React App** running in a user's browser sends HTTP `GET` requests to the Backend API to fetch the latest sensor data, device statuses, and statistics.
-4. The dashboard processes and displays this JSON data graphically.
+```
+Drone/IoT device
+      │
+      │ POST /api/data
+      ▼
+Railway (FastAPI backend)  ◄──────► Supabase (PostgreSQL)
+      │
+      │ GET /api/data (JSON)
+      ▼
+GitHub Pages (React dashboard)
+      │
+      ▼
+User's browser
+```
+
+## Live URLs
+
+| Service | URL |
+|---|---|
+| Frontend (GitHub Pages) | https://olin-hair-lab.github.io/aerialbot_dock |
+| Backend API (Railway) | https://aerialbotdock-production.up.railway.app |
+| API Docs | https://aerialbotdock-production.up.railway.app/docs |
+| Database | Supabase project `aerialbot-dock` (us-east-1) |
 
 ---
 
-## Hosting and Deployment Strategy
+## How it Works
 
-For this to be publicly accessible, it needs to be hosted on the web. A very common setup is to use a cloud provider like **AWS (Amazon Web Services)**.
+1. **IoT Devices / Drones** send sensor data (temperature, moisture, battery) to the **Backend API** via `POST /api/data`.
+2. The **Backend API** processes these requests and stores them in the Supabase PostgreSQL database.
+3. The **Frontend React App** running in a user's browser fetches data from the Backend API and displays it as a dashboard.
 
-### 1. Hosting the Backend (AWS Cloud Instance)
-The backend should be hosted on a cloud instance, such as an **AWS EC2 (Elastic Compute Cloud) server**. 
-- You spin up a Linux instance (like Ubuntu) on AWS.
-- You install **PostgreSQL** on the instance (or use AWS RDS).
-- You run the FastAPI Python app on the server (typically using `uvicorn` and `gunicorn`, put behind a reverse-proxy like Nginx).
-- You assign a static/Elastic IP to this EC2 instance. This IP address (e.g., `http://54.23.xx.xx:80`) is where your frontend will send all its API requests. 
+---
 
-### 2. Hosting the Frontend
-Because React compiles down to flat HTML, CSS, and JavaScript files, you have two great options for hosting it:
-- **Option A (Static Hosting / Serverless - Recommended):** You can use services specifically designed to host frontend apps like **Vercel**, **Netlify**, or **AWS S3 + CloudFront**. These are often free, incredibly fast, and very easy to set up.
-- **Option B (Same Server):** You can host the built frontend files on the *exact same AWS EC2 instance* as your backend, using **Nginx** to route standard web traffic (port 80) to the React files, and API traffic (port 80/api) to the FastAPI server.
+## Deployment
+
+### Backend (Railway)
+
+The FastAPI backend is deployed on [Railway](https://railway.app) from the `web_server/backend` directory. Railway auto-deploys on every push to `main`.
+
+**Required environment variable in Railway:**
+```
+DATABASE_URL=postgresql://postgres.xdzcxzckafnfmotmyscp:[PASSWORD]@aws-1-us-east-1.pooler.supabase.com:5432/postgres
+```
+Use the **Session Pooler** connection string from Supabase (not the direct connection) — Railway is IPv4 only.
+
+### Frontend (GitHub Pages)
+
+The React app is deployed to GitHub Pages via the `gh-pages` npm package.
+
+**To deploy:**
+```bash
+cd web_server/frontend/farm-dashboard
+
+# Set the production API URL (gitignored, do not commit)
+echo "REACT_APP_API_URL=https://aerialbotdock-production.up.railway.app" > .env.production.local
+
+npm install
+npm run deploy
+```
+
+This builds the app and pushes to the `gh-pages` branch. GitHub Pages serves it from there automatically.
+
+### Database (Supabase)
+
+The PostgreSQL database is hosted on Supabase (project: `aerialbot-dock`, region: us-east-1). Schema is managed via Supabase migrations.
+
+**Tables:**
+- `sensor_data` — drone/IoT sensor readings (temperature, soil moisture, humidity, pH)
+- `devices` — registered device registry
+- `locations` — field/location registry
 
 ---
 
 ## Local Setup Guide
 
-If you are just testing the dashboard and API on your computer, follow these steps to run everything locally.
-
 ### Prerequisites
-- Python 3.x installed
-- Node.js and npm installed
-- PostgreSQL installed and running locally
+- Python 3.x
+- Node.js and npm
+- A Supabase account (or local PostgreSQL)
 
-### 1. Database Setup
-The backend attempts a connection to a local Postgres database with specific credentials. You must create this database and user:
-- Database Name: `dronedb`
-- User: `droneuser`
-- Password: `dockANDdata`
-- Port: `5432` *(PostgreSQL default)*
+### 1. Backend
 
-### 2. Running the Backend
-Open a terminal and navigate to the backend directory:
 ```bash
 cd web_server/backend
 
-# Create and activate a python virtual environment (recommended)
 python3 -m venv venv
-source venv/bin/activate  # on Windows use: venv\Scripts\activate
+source venv/bin/activate  # Windows: venv\Scripts\activate
 
-# Install the necessary pip packages
-pip install fastapi "uvicorn[standard]" psycopg2-binary pydantic psutil
+pip install -r requirements.txt
 
-# Start the server on localhost port 8000
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+# Copy and fill in your database URL
+cp .env.example .env.local
+# Edit .env.local with your Supabase connection string
+
+DATABASE_URL="your-connection-string" uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
-*The API is now running and listening for requests at `http://localhost:8000`. You can view the automatic API documentation at `http://localhost:8000/docs`.*
 
-### 3. Running the Frontend
-Open a **new** terminal and navigate to the frontend directory:
+API runs at `http://localhost:8000`. Docs at `http://localhost:8000/docs`.
+
+### 2. Frontend
+
 ```bash
 cd web_server/frontend/farm-dashboard
 
-# Install React dependencies
 npm install
 
-# Start the React development server
+# Uses .env.local which defaults to http://localhost:8000
 npm start
 ```
-*Your browser should automatically open to `http://localhost:3000`. It will now pull data from your local HTTP API!*
+
+Dashboard runs at `http://localhost:3000`.
+
+### 3. Utility Scripts
+
+The backend includes helper scripts for testing. Set `API_URL` to point at your target server:
+
+```bash
+# Send test sensor data
+API_URL=http://localhost:8000 python backend/send_data.py
+
+# Register a device
+API_URL=http://localhost:8000 python backend/add_device.py
+
+# Register a location
+API_URL=http://localhost:8000 python backend/add_location.py
+```

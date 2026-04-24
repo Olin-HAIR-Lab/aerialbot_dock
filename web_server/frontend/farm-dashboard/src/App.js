@@ -5,7 +5,7 @@ function App() {
   const [sensorData, setSensorData] = useState([]);
 
   useEffect(() => {
-    fetch("http://3.131.219.242/api/data")
+    fetch(`${process.env.REACT_APP_API_URL}/api/data`)
       .then((response) => response.json())
       .then((data) => {
         console.log("API Response:", data);

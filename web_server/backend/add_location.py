@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import requests
+import os
 
 def add_location():
-    # Replace with your actual server URL or Elastic IP:
-    SERVER_URL = "http://3.131.219.242:8000/api/data"
+    SERVER_URL = os.environ.get("API_URL", "http://localhost:8000") + "/api/locations"
     
     # Payload matching the LocationModel (Make sure to adjust the fields as per your model)
     payload = {

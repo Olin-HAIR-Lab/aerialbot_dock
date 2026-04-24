@@ -2,6 +2,7 @@
   "name": "farm-dashboard",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://olin-hair-lab.github.io/aerialbot_dock",
   "dependencies": {
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
@@ -13,10 +14,15 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
+  },
+  "devDependencies": {
+    "gh-pages": "^6.3.0"
   },
   "eslintConfig": {
     "extends": [
